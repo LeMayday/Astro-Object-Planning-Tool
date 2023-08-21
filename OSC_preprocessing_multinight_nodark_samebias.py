@@ -115,7 +115,7 @@ with open(workdir + '/log.txt', 'w') as sys.stdout:
         
         # merge documentation says that the final item is the output sequence
         light_seqs.append(process_dir + '/pp_light_group')
-        siril.merge(list_seq=light_seqs)
+        siril.merge(light_seqs)
         stack_lights(process_dir, workdir)
 
     except Exception as e:
