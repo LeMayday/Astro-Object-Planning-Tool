@@ -13,7 +13,7 @@ from pysiril.wrapper import *
 # initial file structure:
 # [work directory]
 # -> biases
-# -> S0i (repace i with a number starting at 1 for each night)
+# -> S0i (replace i with a number starting at 1 for each night)
 #   -> flats
 #   -> lights
 # =============================================================================
