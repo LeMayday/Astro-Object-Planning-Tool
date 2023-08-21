@@ -42,7 +42,7 @@ def master_bias(input_dir, output_dir):
     siril.convert('bias' , out=output_dir, fitseq=True)
     siril.cd(output_dir)
     # default Winsorized is used if omitted
-    siril.stack('bias' , type='rej' , sigma_low=3 , sigma_high=3 , norm='no')
+    siril.stack('bias', type='rej', sigma_low=3, sigma_high=3, norm='no')
     
 def master_flat(input_dir, output_dir, bias_dir):
     siril.cd(input_dir)
@@ -61,10 +61,9 @@ def calibrate_lights(input_dir, output_dir, bias_dir):
 # register and stack full sequence of calibrated light frames
 def stack_lights(input_dir, output_dir):
     siril.cd(input_dir)
-    siril.register('light_group')
-    siril.cd(output_dir)
-    siril.stack('r_pp_light', type='rej', sigma_low=3, sigma_high=3, norm='addscale', 
-                output_norm=True, out='result')
+    siril.register('pp_light_group')
+    siril.stack('r_pp_light_group', type='rej', sigma_low=3, sigma_high=3, norm='addscale', 
+                output_norm=True, out=output_dir + '/result')
     siril.close()
     
 ###############################################################################
@@ -107,19 +106,21 @@ with open(workdir + '/log.txt', 'w') as sys.stdout:
         # prepare master flats and calibrate light frames for each session
         light_seqs = []
         for session in session_dirs:
-            master_flat(workdir + '/' + session + '/flats', process_dir + '/'
-                        + session, bias_process_dir)
-            calibrate_lights(workdir + '/' + session + '/lights', process_dir + '/'
-                            + session, bias_process_dir)
+            master_flat(workdir + '/' + session + '/flats', process_dir + '/' + session,
+                        bias_process_dir)
+            calibrate_lights(workdir + '/' + session + '/lights', process_dir + '/' + session,
+                             bias_process_dir)
             light_seqs.append(process_dir + '/' + session + '/pp_light')
         
-        # merge documentation says that the final item is the output sequence
-        light_seqs.append(process_dir + '/pp_light_group')
-        siril.merge(light_seqs)
+        # merge documentation says that the final item is the output sequence name
+        light_seqs.append('pp_light_group')
+        siril.cd(process_dir)
+        # https://docs.python.org/3/tutorial/controlflow.html#tut-unpacking-arguments
+        siril.merge(*light_seqs)
         stack_lights(process_dir, workdir)
 
     except Exception as e:
-        print("\n**** ERROR *** " +  str(e) + "\n" )    
+        print("\n**** ERROR *** " + str(e) + "\n" )    
 
     # close Siril and delete Siril instance
     app.Close()
