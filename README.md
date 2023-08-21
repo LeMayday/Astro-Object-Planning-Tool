@@ -7,10 +7,10 @@ The file structure needed for the code to run correctly is as follows (also writ
 [work directory]  
 -> biases  
 -> S01  
-  -> flats  
-  -> lights  
+&ensp-> flats  
+&ensp-> lights  
 -> S0i (replace i with a number for each night)  
-  -> flats  
-  -> lights  
+&ensp-> flats  
+&ensp-> lights  
   
 To run the program: download it and double-click on the .py file
