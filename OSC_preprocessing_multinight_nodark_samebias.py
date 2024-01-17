@@ -22,17 +22,8 @@ from pysiril.wrapper import *
 # [work directory]
 # -> biases
 # -> S0i (repace i with a number starting at 1 for each night)
-#   -> flats
-#   -> lights
 # -> process
-#   -> biases
-#       master_bias.fit
-#   -> S0i
-#       -> flats
-#           master_flat.fit
-#       -> lights
-#           light.seq
-#   pp_light_group.seq
+# log.txt
 # result.tif
 ###############################################################################
 
