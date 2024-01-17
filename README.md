@@ -13,4 +13,6 @@ The file structure needed for the code to run correctly is as follows (also writ
 &ensp;-> flats  
 &ensp;-> lights  
   
-To run the program: download it and double-click on the .py file
+To run the program: download it and double-click on the .py file.
+
+Note: This script requires a Windows operating system. Also, I do not claim responsibility if the code breaks or does not work correctly.
