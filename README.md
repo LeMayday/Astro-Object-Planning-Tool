@@ -5,14 +5,14 @@ Download and install PySiril by following the directions here: https://siril.org
 
 The file structure needed for the code to run correctly is as follows (also written in a comment block in the code):  
 
-For the script for only one set of biases (...samebias):
+For the script for only one set of biases (...samebias):  
 [work directory]  
 -> biases  
 -> S0i (replace i with a number for each night)  
 &ensp;-> flats  
 &ensp;-> lights  
 
-For the script for different sets of biases (...diffbias):
+For the script for different sets of biases (...diffbias):  
 [work directory]  
 -> S0i (replace i with a number for each night)  
 &ensp;-> biases  
