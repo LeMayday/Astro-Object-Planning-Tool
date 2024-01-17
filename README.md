@@ -15,7 +15,7 @@ For the script for only one set of biases (...samebias):
 For the script for different sets of biases (...diffbias):
 [work directory]  
 -> S0i (replace i with a number for each night)  
-&ensp;-> biases
+&ensp;-> biases  
 &ensp;-> flats  
 &ensp;-> lights  
   
