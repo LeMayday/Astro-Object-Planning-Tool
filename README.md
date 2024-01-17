@@ -7,7 +7,7 @@ The file structure needed for the code to run correctly is as follows (also writ
 
 For the script for only one set of biases (...samebias):
 [work directory]  
--> biases 
+-> biases  
 -> S0i (replace i with a number for each night)  
 &ensp;-> flats  
 &ensp;-> lights  
