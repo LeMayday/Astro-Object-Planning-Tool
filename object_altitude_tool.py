@@ -46,7 +46,7 @@ def plot_object(celestial_object, lat, long, date):
     fig = plt.figure(figsize = (12, 9))
 
     plt.plot(delta_night, celestial_object_alt_az.alt.degree, linewidth=2)
-    plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + ", " + str(long))
+    plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + " Lat")
     plt.xlabel('Local Solar Time')
     plt.ylabel('Altitude (degrees)')
     plt.xticks([-night_half_length, -astro_dark_half_length, 0, astro_dark_half_length, night_half_length], 
@@ -64,7 +64,7 @@ def main():
     parser.add_argument('-d', '--date', required=True, help="Date of the observation")
     args = parser.parse_args()
 
-    plot_object(args.name, args.parallel, 0, args.date)
+    plot_object(args.name, args.latitude, 0, args.date)
 
 if __name__ == "__main__":
     main()
