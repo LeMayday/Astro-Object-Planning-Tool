@@ -26,8 +26,8 @@ location = EarthLocation(lat=float(lat) * u.deg, lon=float(long) * u.deg, height
 
 date = input("Enter the date of your observation (mm/dd/yyyy): ")
 month, day, year = date.split("/")
-timestamp = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
-local_midnight = Time(timestamp.to_value('jd', 'float') + 1 - float(long) / 360, format='jd')
+date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
+local_midnight = Time(date.to_value('jd', 'float') + 1 - float(long) / 360, format='jd')
 
 night_half_length = night_half_duration(local_midnight, location)
 delta_midnight = np.linspace(-night_half_length, night_half_length, 1000) * u.hour
@@ -38,6 +38,7 @@ celestial_object_alt_az = celestial_object_coords.transform_to(local_frame)
 fig = plt.figure(figsize = (12, 9))
 
 plt.plot(delta_midnight, celestial_object_alt_az.alt.degree, linewidth=2)
+plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + ", " + str(long))
 plt.xlabel('Local Solar Time')
 plt.ylabel('Altitude (degrees)')
 plt.xticks([-night_half_length, 0, night_half_length], ["Sunset", "Midnight", "Sunrise"])
