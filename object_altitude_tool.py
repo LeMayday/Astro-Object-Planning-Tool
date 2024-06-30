@@ -1,3 +1,5 @@
+# Author: Mayday
+# Date: 6/29/2024
 # inspired by https://docs.astropy.org/en/stable/generated/examples/coordinates/plot_obs-planning.html
 # requires matplotlib, numpy, astropy, and jplephem modules
 
@@ -14,6 +16,7 @@ def night_half_duration(local_midnight, location):
     # given midnight, we know sunset will occur sometime within the 12 hours prior
     range_to_search = local_midnight + np.linspace(-12, 0, n) * u.hour
     local_frame = AltAz(obstime=range_to_search, location=location)
+    # requires jplephem module
     sun = get_body('sun', range_to_search).transform_to(local_frame)
     # set variable = 0 if sunset does not occur over the range
     sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 12 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
