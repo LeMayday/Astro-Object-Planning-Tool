@@ -12,11 +12,11 @@ def night_half_duration(local_midnight, location):
     # number of points used to estimate midnight
     n = 1000
     # first looks for noon over the 13 hours before midnight
-    range_to_search = local_midnight + np.linspace(-13, 0, n) * u.hour
+    range_to_search = local_midnight + np.linspace(-12, 0, n) * u.hour
     local_frame = AltAz(obstime=range_to_search, location=location)
     sun = get_body('sun', range_to_search).transform_to(local_frame)
-    sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 13 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
-    astro_dark_to_midnight = (n - np.argmin(np.abs(sun.alt.degree + 18))) / n * 13 if np.argmin(np.abs(sun.alt.degree + 18)) != n - 1 else 0
+    sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 12 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
+    astro_dark_to_midnight = (n - np.argmin(np.abs(sun.alt.degree + 18))) / n * 12 if np.argmin(np.abs(sun.alt.degree + 18)) != n - 1 else 0
     return sunset_to_midnight, astro_dark_to_midnight
 
 celestial_object = input("Enter the name of the object: ")
