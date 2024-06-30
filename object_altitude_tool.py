@@ -14,8 +14,8 @@ def night_half_duration(local_midnight, location):
     # first looks for noon over the 13 hours before midnight
     range_to_search = local_midnight + np.linspace(-13, 0, n) * u.hour
     local_frame = AltAz(obstime=range_to_search, location=location)
-    sun = get_body('sun', range_to_search)
-    sunset_to_midnight = (n - np.argmin(np.abs(sun.transform_to(local_frame).alt.degree))) / n * 13
+    sun = get_body('sun', range_to_search).transform_to(local_frame)
+    sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 13 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
     astro_dark_to_midnight = (n - np.argmin(np.abs(sun.alt.degree + 18))) / n * 13 if np.argmin(np.abs(sun.alt.degree + 18)) != n - 1 else 0
     return sunset_to_midnight, astro_dark_to_midnight
 
@@ -34,6 +34,9 @@ local_midnight = Time(date.to_value('jd', 'float') + 1 - float(long) / 360, form
 delta_midnight = np.linspace(-night_half_length, night_half_length, 1000) * u.hour
 local_frame = AltAz(obstime=local_midnight + delta_midnight, location=location)
 night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
+if (night_half_length == 0):
+    print("Sun does not set.")
+    exit()
 
 celestial_object_alt_az = celestial_object_coords.transform_to(local_frame)
 
