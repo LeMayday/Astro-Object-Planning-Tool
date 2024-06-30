@@ -1,4 +1,5 @@
 # inspired by https://docs.astropy.org/en/stable/generated/examples/coordinates/plot_obs-planning.html
+# requires matplotlib, numpy, astropy, and jplephem modules
 
 import matplotlib.pyplot as plt
 import numpy as np
