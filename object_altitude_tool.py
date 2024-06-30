@@ -83,7 +83,7 @@ def main():
     parser.add_argument('-n', '--name', required=True, help="Name of object")
     parser.add_argument('-l', '--latitude', required=True, type=float, help="Latitude as decimal degrees")
     # parser.add_argument('-m', '--meridian', required=True, type=float, help="Longitude (meridian) as decimal degrees")
-    parser.add_argument('-d', '--date', required=True, help="Date of the observation")
+    parser.add_argument('-d', '--date', required=True, help="Date of the observation (mm/dd/yyyy)")
     args = parser.parse_args()
 
     plot_object(args.name, args.latitude, 0, args.date)
