@@ -5,6 +5,7 @@
 
 import argparse
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 16})
 import numpy as np
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
@@ -26,12 +27,13 @@ def night_half_duration(local_midnight, location):
     return sunset_to_midnight, astro_dark_to_midnight
 
 def plot_object(celestial_object, lat, long, date):
+    # uses Simbad to resolve object names and retrieve coordinates
     celestial_object_coords = SkyCoord.from_name(celestial_object)
     location = EarthLocation(lat=lat * u.deg, lon=long * u.deg, height = 0 * u.m)
 
     month, day, year = date.split("/")
     date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
-    # +1 for night of date
+    # +1 for night of date, - long / 360 to convert to local midnight
     local_midnight = Time(date.to_value('jd', 'float') + 1 - long / 360, format='jd')
 
     night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
@@ -55,7 +57,7 @@ def plot_object(celestial_object, lat, long, date):
 
     fig = plt.figure(figsize = (12, 9))
 
-    plt.plot(delta_night, celestial_object_alt_az.alt.degree, linewidth=2)
+    plt.plot(delta_night, celestial_object_alt_az.alt.degree, linewidth=3)
     plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + " Lat")
     plt.xlabel('Local Solar Time')
     plt.ylabel('Altitude (degrees)')
