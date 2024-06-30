@@ -7,15 +7,17 @@ import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
 
+# determines the time from sunset to midnight and astronomical dark to midnight
 def night_half_duration(local_midnight, location):
-    # estimate position of sun to determine local solar noon / midnight
-    # number of points used to estimate midnight
+    # number of points used to estimate sunset
     n = 1000
-    # first looks for noon over the 13 hours before midnight
+    # given midnight, we know sunset will occur sometime within the 12 hours prior
     range_to_search = local_midnight + np.linspace(-12, 0, n) * u.hour
     local_frame = AltAz(obstime=range_to_search, location=location)
     sun = get_body('sun', range_to_search).transform_to(local_frame)
+    # set variable = 0 if sunset does not occur over the range
     sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 12 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
+    # astronomical dark is accepted to occur when the sun is 18 degrees below the horizon
     astro_dark_to_midnight = (n - np.argmin(np.abs(sun.alt.degree + 18))) / n * 12 if np.argmin(np.abs(sun.alt.degree + 18)) != n - 1 else 0
     return sunset_to_midnight, astro_dark_to_midnight
 
@@ -29,6 +31,7 @@ location = EarthLocation(lat=float(lat) * u.deg, lon=float(long) * u.deg, height
 date = input("Enter the date of your observation (mm/dd/yyyy): ")
 month, day, year = date.split("/")
 date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
+# +1 for night of date
 local_midnight = Time(date.to_value('jd', 'float') + 1 - float(long) / 360, format='jd')
 
 night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
