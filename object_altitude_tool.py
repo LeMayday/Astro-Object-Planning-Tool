@@ -38,10 +38,20 @@ def plot_object(celestial_object, lat, long, date):
     if (night_half_length == 0):
         print("Sun does not set.")
         exit()
-    delta_night = np.linspace(-night_half_length, night_half_length, 1000) * u.hour
+
+    # num data points
+    n = 1000
+    delta_night = np.linspace(-night_half_length, night_half_length, n) * u.hour
     local_frame = AltAz(obstime=local_midnight + delta_night, location=location)
 
     celestial_object_alt_az = celestial_object_coords.transform_to(local_frame)
+
+    # calculates time above horizon and time above horizon during astro dark
+    time_above_horizon = np.size(celestial_object_alt_az.alt.degree[celestial_object_alt_az.alt.degree > 0]) / n * night_half_length * 2
+    idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
+    idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
+    co_alt_az_astro_dark = celestial_object_alt_az.alt.degree[idx1 : idx2]
+    time_astro_dark = np.size(co_alt_az_astro_dark[co_alt_az_astro_dark > 0]) / n * night_half_length * 2
 
     fig = plt.figure(figsize = (12, 9))
 
@@ -54,6 +64,10 @@ def plot_object(celestial_object, lat, long, date):
     plt.ylim([0, 90])
     plt.yticks(np.arange(0, 91, 15))
 
+    textstr = "Above Horizon: " + str(np.round(time_above_horizon, 2)) + " hrs\nDuring Astro Dark: " + str(np.round(time_astro_dark, 2)) + " hrs"
+    plt.text(night_half_length, 85, textstr, multialignment='left', horizontalalignment='right', verticalalignment='center')
+
+    fig.tight_layout()
     plt.savefig(celestial_object.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year)
 
 def main():
