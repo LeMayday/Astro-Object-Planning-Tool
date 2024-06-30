@@ -55,9 +55,14 @@ def plot_object(celestial_object, lat, long, date):
     co_alt_az_astro_dark = celestial_object_alt_az.alt.degree[idx1 : idx2]
     time_astro_dark = np.size(co_alt_az_astro_dark[co_alt_az_astro_dark > 0]) / n * night_half_length * 2
 
+    # determine Moon position
+    moon = get_body("moon", local_midnight + delta_night)
+    moon_alt_az = moon.transform_to(local_frame)
+
     fig = plt.figure(figsize = (12, 9))
 
-    plt.plot(delta_night, celestial_object_alt_az.alt.degree, linewidth=3)
+    plt.plot(delta_night, celestial_object_alt_az.alt.degree, label=celestial_object, linewidth=3)
+    plt.plot(delta_night, moon_alt_az.alt.degree, label="Moon", linewidth=3, color='k')
     plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + " Lat")
     plt.xlabel('Local Solar Time')
     plt.ylabel('Altitude (degrees)')
@@ -65,6 +70,7 @@ def plot_object(celestial_object, lat, long, date):
             ["Sunset", "Astro Dusk", "Midnight", "Astro Dawn", "Sunrise"])
     plt.ylim([0, 90])
     plt.yticks(np.arange(0, 91, 15))
+    plt.legend(loc="upper left")
 
     textstr = "Above Horizon: " + str(np.round(time_above_horizon, 2)) + " hrs\nDuring Astro Dark: " + str(np.round(time_astro_dark, 2)) + " hrs"
     plt.text(night_half_length, 85, textstr, multialignment='left', horizontalalignment='right', verticalalignment='center')
