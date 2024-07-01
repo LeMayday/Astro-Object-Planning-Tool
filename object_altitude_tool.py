@@ -21,9 +21,9 @@ def night_half_duration(local_midnight, location):
     # requires jplephem module
     sun = get_body('sun', range_to_search).transform_to(local_frame)
     # set variable = 0 if sunset does not occur over the range
-    sunset_to_midnight = (n - np.argmin(np.abs(sun.alt.degree))) / n * 12 if np.argmin(np.abs(sun.alt.degree)) != n - 1 else 0
+    sunset_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= 0]) / n * 12
+    astro_dark_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= -18]) / n * 12
     # astronomical dark is accepted to occur when the sun is 18 degrees below the horizon
-    astro_dark_to_midnight = (n - np.argmin(np.abs(sun.alt.degree + 18))) / n * 12 if np.argmin(np.abs(sun.alt.degree + 18)) != n - 1 else 0
     return sunset_to_midnight, astro_dark_to_midnight
 
 def plot_object(celestial_object, lat, long, date):
@@ -67,7 +67,7 @@ def plot_object(celestial_object, lat, long, date):
     plt.xlabel('Local Solar Time')
     plt.ylabel('Altitude (degrees)')
     plt.xticks([-night_half_length, -astro_dark_half_length, 0, astro_dark_half_length, night_half_length], 
-            ["Sunset", "Astro Dusk", "Midnight", "Astro Dawn", "Sunrise"])
+               ["Sunset", "Astro\nDusk", "Midnight", "Astro\nDawn", "Sunrise"])
     plt.ylim([0, 90])
     plt.yticks(np.arange(0, 91, 15))
     plt.legend(loc="upper left")
