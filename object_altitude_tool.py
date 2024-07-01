@@ -20,10 +20,9 @@ def night_half_duration(local_midnight, location):
     local_frame = AltAz(obstime=range_to_search, location=location)
     # requires jplephem module
     sun = get_body('sun', range_to_search).transform_to(local_frame)
-    # set variable = 0 if sunset does not occur over the range
     sunset_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= 0]) / n * 12
-    astro_dark_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= -18]) / n * 12
     # astronomical dark is accepted to occur when the sun is 18 degrees below the horizon
+    astro_dark_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= -18]) / n * 12
     return sunset_to_midnight, astro_dark_to_midnight
 
 def plot_object(celestial_object, lat, long, date):
