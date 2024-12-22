@@ -48,11 +48,11 @@ def plot_object(celestial_object, lat, long, date):
     celestial_object_alt_az = celestial_object_coords.transform_to(local_frame)
 
     # calculates time above horizon and time above horizon during astro dark
-    time_above_horizon = np.size(celestial_object_alt_az.alt.degree[celestial_object_alt_az.alt.degree > 0]) / n * night_half_length * 2
+    time_above_horizon = np.count_nonzero(celestial_object_alt_az.alt.degree > 0) / n * night_half_length * 2
     idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
     idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
     co_alt_az_astro_dark = celestial_object_alt_az.alt.degree[idx1 : idx2]
-    time_astro_dark = np.size(co_alt_az_astro_dark[co_alt_az_astro_dark > 0]) / n * night_half_length * 2
+    time_astro_dark = np.count_nonzero(co_alt_az_astro_dark > 0) / n * night_half_length * 2
 
     # determine Moon position
     moon = get_body("moon", local_midnight + delta_night)
