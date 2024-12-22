@@ -49,6 +49,7 @@ def plot_object(celestial_object, lat, long, date):
 
     # calculates time above horizon and time above horizon during astro dark
     time_above_horizon = np.count_nonzero(celestial_object_alt_az.alt.degree > 0) / n * night_half_length * 2
+    time_above_15_deg = np.count_nonzero(celestial_object_alt_az.alt.degree > 15) / n * night_half_length * 2
     idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
     idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
     co_alt_az_astro_dark = celestial_object_alt_az.alt.degree[idx1 : idx2]
@@ -71,8 +72,9 @@ def plot_object(celestial_object, lat, long, date):
     plt.yticks(np.arange(0, 91, 15))
     plt.legend(loc="upper left")
 
-    textstr = "Above Horizon: " + str(np.round(time_above_horizon, 2)) + " hrs\nDuring Astro Dark: " + str(np.round(time_astro_dark, 2)) + " hrs"
-    plt.text(night_half_length, 85, textstr, multialignment='left', horizontalalignment='right', verticalalignment='center')
+    text = "Above Horizon: %s hrs\nAbove 15 deg: %s hrs\nDuring Astro Dark: %s hrs" \
+        % (np.round(time_above_horizon, 2), np.round(time_above_15_deg, 2), np.round(time_astro_dark, 2))
+    plt.text(night_half_length, 82, text, multialignment='left', horizontalalignment='right', verticalalignment='center')
 
     fig.tight_layout()
     plt.savefig(celestial_object.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year)
