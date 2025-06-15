@@ -1,5 +1,4 @@
 astropy==6.1.1
-matplotlib==3.9.0
-numpy>=1.26.4
-pysiril==0.0.15
+matplotlib==3.10.3
+numpy==2.3.0
 jplephem==2.22
