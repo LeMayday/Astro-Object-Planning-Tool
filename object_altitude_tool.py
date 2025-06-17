@@ -32,9 +32,12 @@ def plot_object(celestial_object, lat, long, date):
 
     month, day, year = date.split("/")
     date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
+def get_local_midnight(date: Time, long: u.quantity.Quantity = 0*u.deg) -> Time:
     # +1 for night of date, - long / 360 to convert to local midnight
     local_midnight = Time(date.to_value('jd', 'float') + 1 - long / 360, format='jd')
 
+    local_midnight = Time(date.to_value('jd', 'float') + 1 - long.value / 360, format='jd')
+    return local_midnight
     night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
     if (night_half_length == 0):
         print("Sun does not set.")
