@@ -38,6 +38,10 @@ def get_local_midnight(date: Time, long: u.quantity.Quantity = 0*u.deg) -> Time:
 
     local_midnight = Time(date.to_value('jd', 'float') + 1 - long.value / 360, format='jd')
     return local_midnight
+def get_viewer_location(lat: u.quantity.Quantity, long: u.quantity.Quantity = 0*u.deg) -> EarthLocation:
+    location = EarthLocation(lat=lat, lon=long, height = 0 * u.m)
+    return location
+
     night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
     if (night_half_length == 0):
         print("Sun does not set.")
