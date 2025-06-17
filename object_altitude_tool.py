@@ -12,6 +12,33 @@ import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
 
+class Observing_Metrics:
+    '''
+    Class object that calculates and stores observing metrics for the night
+    night_half_length
+    astro_dark_half_length
+    time_above_horizon
+    time_above_15_deg
+    time_astro_dark (also above horizon)
+    time_optimal (time above 15 deg and during astro dark)
+    '''
+    def __init__(self, object_alt_az: SkyCoord, local_midnight: Time, location: EarthLocation):
+        # num data points
+        n = np.size(object_alt_az)
+        night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
+        self.night_half_length = night_half_length
+        self.astro_dark_half_length = astro_dark_half_length
+        # fraction of altitudes that match criterion * length of night in hours
+        self.time_above_horizon = np.count_nonzero(object_alt_az.alt.degree > 0) / n * night_half_length * 2
+        self.time_above_15_deg = np.count_nonzero(object_alt_az.alt.degree > 15) / n * night_half_length * 2
+        # fraction of night before astro dark * n to get start index
+        idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * n).astype(int)
+        # fraction of night until end of astro dark * n to get end index
+        idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * n).astype(int)
+        co_alt_az_astro_dark = object_alt_az.alt.degree[idx1 : idx2]
+        self.time_astro_dark = np.count_nonzero(co_alt_az_astro_dark > 0) / n * night_half_length * 2
+        # TODO: add time_optimal
+
 def night_half_duration(local_midnight: Time, location: EarthLocation) -> Tuple[float, float]:
     '''
     Determines time from sunset to local midnight and astronomical dark to local midnight
