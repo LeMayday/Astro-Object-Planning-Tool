@@ -42,6 +42,17 @@ def get_viewer_location(lat: u.quantity.Quantity, long: u.quantity.Quantity = 0*
     location = EarthLocation(lat=lat, lon=long, height = 0 * u.m)
     return location
 
+def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthLocation) -> SkyCoord:
+    # local frame so coords can be converted to alt, az
+    local_frame = AltAz(obstime=time_range, location=location)
+    if object_name == 'sun' or object_name == 'moon':
+        # uses jpl ephemerides 
+        object_alt_az = get_body(object_name, time_range).transform_to(local_frame)
+    else:
+        # uses Simbad to resolve object names and retrieve coordinates
+        object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
+    return object_alt_az
+
     night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
     if (night_half_length == 0):
         print("Sun does not set.")
