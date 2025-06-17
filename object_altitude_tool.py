@@ -57,19 +57,11 @@ def night_half_duration(local_midnight: Time, location: EarthLocation) -> Tuple[
     astro_dark_to_midnight = np.size(sun_alt_az.alt.degree[sun_alt_az.alt.degree <= -18]) / n * 12
     return sunset_to_midnight, astro_dark_to_midnight
 
-def plot_object(celestial_object, lat, long, date):
-    # uses Simbad to resolve object names and retrieve coordinates
-    celestial_object_coords = SkyCoord.from_name(celestial_object)
-    location = EarthLocation(lat=lat * u.deg, lon=long * u.deg, height = 0 * u.m)
-
-    month, day, year = date.split("/")
-    date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
 def get_local_midnight(date: Time, long: u.quantity.Quantity = 0*u.deg) -> Time:
     # +1 for night of date, - long / 360 to convert to local midnight
-    local_midnight = Time(date.to_value('jd', 'float') + 1 - long / 360, format='jd')
-
     local_midnight = Time(date.to_value('jd', 'float') + 1 - long.value / 360, format='jd')
     return local_midnight
+
 def get_viewer_location(lat: u.quantity.Quantity, long: u.quantity.Quantity = 0*u.deg) -> EarthLocation:
     location = EarthLocation(lat=lat, lon=long, height = 0 * u.m)
     return location
@@ -85,6 +77,9 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
         object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
     return object_alt_az
 
+def plot_object(object_name: str, date: Time, location: EarthLocation):
+
+    local_midnight = get_local_midnight(date)
     night_half_length, astro_dark_half_length = night_half_duration(local_midnight, location)
     if (night_half_length == 0):
         print("Sun does not set.")
@@ -92,42 +87,36 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
 
     # num data points
     n = 1000
-    delta_night = np.linspace(-night_half_length, night_half_length, n) * u.hour
-    local_frame = AltAz(obstime=local_midnight + delta_night, location=location)
+    night_hrs_vec = np.linspace(-night_half_length, night_half_length, n) * u.hour
 
-    celestial_object_alt_az = celestial_object_coords.transform_to(local_frame)
-
-    # calculates time above horizon and time above horizon during astro dark
-    time_above_horizon = np.count_nonzero(celestial_object_alt_az.alt.degree > 0) / n * night_half_length * 2
-    time_above_15_deg = np.count_nonzero(celestial_object_alt_az.alt.degree > 15) / n * night_half_length * 2
-    idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
-    idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * 1000).astype(int)
-    co_alt_az_astro_dark = celestial_object_alt_az.alt.degree[idx1 : idx2]
-    time_astro_dark = np.count_nonzero(co_alt_az_astro_dark > 0) / n * night_half_length * 2
-
+    object_alt_az = get_object_alt_az(object_name, local_midnight + night_hrs_vec, location)
+    metrics = Observing_Metrics(object_alt_az, local_midnight, location)
     # determine Moon position
-    moon = get_body("moon", local_midnight + delta_night)
-    moon_alt_az = moon.transform_to(local_frame)
+    moon_alt_az = get_object_alt_az('moon', local_midnight + night_hrs_vec, location)
+    
+    year = str(date.ymdhms[0])
+    month = str(date.ymdhms[1])
+    day = str(date.ymdhms[2])
 
-    fig = plt.figure(figsize = (12, 9))
+    fig, ax = plt.subplots(figsize = (12, 9))
 
-    plt.plot(delta_night, celestial_object_alt_az.alt.degree, label=celestial_object, linewidth=3)
-    plt.plot(delta_night, moon_alt_az.alt.degree, label="Moon", linewidth=3, color='k')
-    plt.title(celestial_object + " on the night of " + month + "/" + day + "/" + year + " at " + str(lat) + " Lat")
-    plt.xlabel('Local Solar Time')
-    plt.ylabel('Altitude (degrees)')
-    plt.xticks([-night_half_length, -astro_dark_half_length, 0, astro_dark_half_length, night_half_length], 
+    ax.plot(night_hrs_vec, object_alt_az.alt.degree, label=object_name, linewidth=3)
+    ax.plot(night_hrs_vec, moon_alt_az.alt.degree, label="Moon", linewidth=3, color='k')
+    ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
+    ax.set_xlabel('Local Solar Time')
+    ax.set_ylabel('Altitude (degrees)')
+    ax.set_xticks([-night_half_length, -astro_dark_half_length, 0, astro_dark_half_length, night_half_length], 
                ["Sunset", "Astro\nDusk", "Midnight", "Astro\nDawn", "Sunrise"])
-    plt.ylim([0, 90])
-    plt.yticks(np.arange(0, 91, 15))
-    plt.legend(loc="upper left")
+    ax.set_ylim([0, 90])
+    ax.set_yticks(np.arange(0, 91, 15))
+    ax.legend(loc="upper left")
 
     text = "Above Horizon: %s hrs\nAbove 15 deg: %s hrs\nDuring Astro Dark: %s hrs" \
-        % (np.round(time_above_horizon, 2), np.round(time_above_15_deg, 2), np.round(time_astro_dark, 2))
-    plt.text(night_half_length, 82, text, multialignment='left', horizontalalignment='right', verticalalignment='center')
+        % (np.round(metrics.time_above_horizon, 2), np.round(metrics.time_above_15_deg, 2), np.round(metrics.time_astro_dark, 2))
+    ax.text(night_half_length, 82, text, multialignment='left', horizontalalignment='right', verticalalignment='center')
 
     fig.tight_layout()
-    plt.savefig(celestial_object.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year)
+    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -137,7 +126,11 @@ def main():
     parser.add_argument('-d', '--date', required=True, help="Date of the observation (mm/dd/yyyy)")
     args = parser.parse_args()
 
-    plot_object(args.name, args.latitude, 0, args.date)
+    month, day, year = args.date.split("/")
+    date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
+    location = get_viewer_location(args.latitude * u.deg)
+
+    plot_object(args.name, date, location)
 
 if __name__ == "__main__":
     main()
