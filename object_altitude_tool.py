@@ -3,6 +3,7 @@
 # inspired by https://docs.astropy.org/en/stable/generated/examples/coordinates/plot_obs-planning.html
 # requires matplotlib, numpy, astropy, and jplephem modules
 
+from typing import Tuple
 import argparse
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 16})
@@ -11,18 +12,22 @@ import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
 
-# determines the time from sunset to midnight and astronomical dark to midnight
-def night_half_duration(local_midnight, location):
+def night_half_duration(local_midnight: Time, location: EarthLocation) -> Tuple[float, float]:
+    '''
+    Determines time from sunset to local midnight and astronomical dark to local midnight
+    Inputs: Time object with JD format, EarthLocation based on lat, long
+    Outputs: time from sunset to midnight and time from astro dark to midnight in hours
+    '''
     # number of points used to estimate sunset
     n = 1000
     # given midnight, we know sunset will occur sometime within the 12 hours prior
+    # for simplicity, sunset to midnight and midnight to sunrise is assumed to be the same
     range_to_search = local_midnight + np.linspace(-12, 0, n) * u.hour
-    local_frame = AltAz(obstime=range_to_search, location=location)
-    # requires jplephem module
-    sun = get_body('sun', range_to_search).transform_to(local_frame)
-    sunset_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= 0]) / n * 12
-    # astronomical dark is accepted to occur when the sun is 18 degrees below the horizon
-    astro_dark_to_midnight = np.size(sun.alt.degree[sun.alt.degree <= -18]) / n * 12
+    sun_alt_az = get_object_alt_az('sun', range_to_search, location)
+    # TODO: change this to np.count_nonzero
+    sunset_to_midnight = np.size(sun_alt_az.alt.degree[sun_alt_az.alt.degree <= 0]) / n * 12
+    # astronomical dark occurs when the sun is 18 degrees below the horizon
+    astro_dark_to_midnight = np.size(sun_alt_az.alt.degree[sun_alt_az.alt.degree <= -18]) / n * 12
     return sunset_to_midnight, astro_dark_to_midnight
 
 def plot_object(celestial_object, lat, long, date):
