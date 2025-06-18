@@ -140,6 +140,15 @@ def main():
 
     midnight_deltaT = range_to_search[sun_alt_az.alt.degree <= 0]
 
+    if (midnight_deltaT.size == 0):
+        print("Sun does not set.")
+        exit()
+
+    astro_dark_deltaT = range_to_search[sun_alt_az.alt.degree <= 18]
+
+    if (astro_dark_deltaT.size == 0):
+        print("No astronomical dark.")
+        exit()
 
     plot_object(args.name, date, midnight_deltaT, location)
 
