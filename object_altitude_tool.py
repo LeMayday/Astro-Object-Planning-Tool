@@ -11,7 +11,7 @@ import numpy as np
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
-from plot_utils import colored_line, colored_line_between_pts
+from plot_utils import colored_line, colored_line_between_pts, polar_subplots, make_proxy
 
 class Observing_Metrics:
     '''
@@ -93,32 +93,33 @@ def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, locat
     day = str(date.ymdhms[2])
 
     astro_dark_deltaT = midnight_deltaT[sun_alt_az.alt.degree <= -18]
-
-    fig, ax = plt.subplots(figsize = (12, 9))
+    # , subplot_kw={'projection': 'polar'}
+    fig, ax = polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
 
     color = sun_alt_az.alt.degree
     color[sun_alt_az.alt.degree > 0] = 0
     color[sun_alt_az.alt.degree < -18] = -18
-    colored_line(midnight_deltaT, object_alt_az.alt.degree, color, ax, linewidth=10, cmap="cividis")
-    colored_line(midnight_deltaT, moon_alt_az.alt.degree, color, ax, linewidth=10, cmap="cividis")
-    
-    # ax.plot(midnight_deltaT, object_alt_az.alt.degree, label=object_name, linewidth=3)
-    # ax.plot(midnight_deltaT, moon_alt_az.alt.degree, label="Moon", linewidth=3, color='k')
-    # ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
-    # ax.set_xlabel('Local Solar Time')
-    # ax.set_ylabel('Altitude (degrees)')
-    
-    ax.set_xticks([midnight_deltaT[0], astro_dark_deltaT[0], 0, astro_dark_deltaT[-1], midnight_deltaT[-1]], 
-               ["Sunset", "Astro\nDusk", "Midnight", "Astro\nDawn", "Sunrise"])
-    ax.set_ylim([0, 90])
-    ax.set_yticks(np.arange(0, 91, 15))
-    ax.legend(loc="upper left")
 
-    # text = "Above Horizon: %s hrs\nAbove 15 deg: %s hrs\nDuring Astro Dark: %s hrs" \
-    #     % (np.round(metrics.time_above_horizon, 2), np.round(metrics.time_above_15_deg, 2), np.round(metrics.time_astro_dark, 2))
-    # ax.text(midnight_deltaT[-1], 82, text, multialignment='left', horizontalalignment='right', verticalalignment='center')
+    obj_above_horizon = object_alt_az.alt.radian >= 0
+    moon_above_horizon = moon_alt_az.alt.radian >= 0
+
+    lines = colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], np.cos(object_alt_az.alt.radian[obj_above_horizon]), color[obj_above_horizon], ax, linewidth=5, cmap="cividis")
+    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], np.cos(moon_alt_az.alt.radian[moon_above_horizon]), linewidth=3, color='k', label='Moon', alpha=0.8)
+    ax.set_rlim([0, 1])
+    ax.set_rticks(np.cos(np.radians([15, 30, 45, 60, 75])), labels=['15', '30', '45', '60', '75'])
+    ax.set_theta_zero_location('N')
+    
+    ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
+
+    handles, labels = ax.get_legend_handles_labels()
+    proxy = make_proxy(np.min(color[obj_above_horizon]), lines, linewidth=5)
+    handles.insert(0, proxy)
+    labels.insert(0, object_name)
+
+    ax.legend(handles=handles, labels=labels, loc="upper left")
+
     fig.tight_layout()
-    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year)
+    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year, dpi=300)
 
 def main():
     parser = argparse.ArgumentParser()

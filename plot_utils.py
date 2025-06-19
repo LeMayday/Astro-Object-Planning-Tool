@@ -1,7 +1,11 @@
 # taken from: https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
 import warnings
 
+from typing import Tuple
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.projections.polar import PolarAxes
+from matplotlib.lines import Line2D
 import numpy as np
 
 from matplotlib.collections import LineCollection
@@ -116,3 +120,12 @@ def colored_line_between_pts(x, y, c, ax, **lc_kwargs):
     lc.set_array(c)
 
     return ax.add_collection(lc)
+
+def polar_subplots(**fig_kw) -> Tuple[Figure, PolarAxes]:
+    fig, ax = plt.subplots(**fig_kw)
+    return fig, ax
+
+# https://stackoverflow.com/questions/19877666/add-legends-to-linecollection-plot
+def make_proxy(zvalue, scalar_mappable, **kwargs):
+    color = scalar_mappable.cmap(scalar_mappable.norm(zvalue))
+    return Line2D([0, 1], [0, 1], color=color, **kwargs)
