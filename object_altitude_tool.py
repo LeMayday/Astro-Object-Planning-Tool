@@ -135,8 +135,8 @@ def main():
     local_midnight = get_local_midnight(date)
 
     # need to go a bit past 24 hrs since local_midnight isn't centered on the solar day
-    n = 1000
-    range_to_search = np.linspace(-12.5, 12.5, n)
+    n_search = 1000
+    range_to_search = np.linspace(-12.5, 12.5, n_search)
     sun_alt_az = get_object_alt_az('sun', local_midnight + range_to_search * u.hour, location)
 
     midnight_deltaT = range_to_search[sun_alt_az.alt.degree <= 0]
@@ -150,6 +150,9 @@ def main():
     if (astro_dark_deltaT.size == 0):
         print("No astronomical dark.")
         exit()
+
+    n = 5000
+    midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
 
     plot_object(args.name, date, midnight_deltaT, location)
 
