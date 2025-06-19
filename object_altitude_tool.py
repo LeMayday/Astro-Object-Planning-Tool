@@ -11,7 +11,7 @@ import numpy as np
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
-from plot_utils import colored_line, colored_line_between_pts, polar_subplots, make_proxy
+import plot_utils
 
 class Observing_Metrics:
     '''
@@ -77,7 +77,7 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
         object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
     return object_alt_az
 
-def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, location: EarthLocation):
+def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, location: EarthLocation, projection: str):
 
     local_midnight = get_local_midnight(date)
 
@@ -93,8 +93,7 @@ def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, locat
     day = str(date.ymdhms[2])
 
     astro_dark_deltaT = midnight_deltaT[sun_alt_az.alt.degree <= -18]
-    # , subplot_kw={'projection': 'polar'}
-    fig, ax = polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
+    fig, ax = plot_utils.polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
 
     color = sun_alt_az.alt.degree
     color[sun_alt_az.alt.degree > 0] = 0
@@ -103,16 +102,18 @@ def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, locat
     obj_above_horizon = object_alt_az.alt.radian >= 0
     moon_above_horizon = moon_alt_az.alt.radian >= 0
 
-    lines = colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], np.cos(object_alt_az.alt.radian[obj_above_horizon]), color[obj_above_horizon], ax, linewidth=5, cmap="cividis")
-    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], np.cos(moon_alt_az.alt.radian[moon_above_horizon]), linewidth=3, color='k', label='Moon', alpha=0.8)
+    lines = plot_utils.colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], plot_utils.project_onto_polar(object_alt_az.alt.radian[obj_above_horizon], projection),
+                                                color[obj_above_horizon], ax, linewidth=5, cmap="cividis")
+    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], plot_utils.project_onto_polar(moon_alt_az.alt.radian[moon_above_horizon], projection), 
+                linewidth=3, color='k', label='Moon', alpha=0.8)
     ax.set_rlim([0, 1])
-    ax.set_rticks(np.cos(np.radians([15, 30, 45, 60, 75])), labels=['15', '30', '45', '60', '75'])
+    ax.set_rticks(plot_utils.project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
     ax.set_theta_zero_location('N')
     
     ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
 
     handles, labels = ax.get_legend_handles_labels()
-    proxy = make_proxy(np.min(color[obj_above_horizon]), lines, linewidth=5)
+    proxy = plot_utils.make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
 
@@ -123,10 +124,11 @@ def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, locat
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--name', required=True, help="Name of object")
+    parser.add_argument('-n', '--name', required=True, type= str, help="Name of object")
     parser.add_argument('-l', '--latitude', required=True, type=float, help="Latitude as decimal degrees")
     # parser.add_argument('-m', '--meridian', required=True, type=float, help="Longitude (meridian) as decimal degrees")
-    parser.add_argument('-d', '--date', required=True, help="Date of the observation (mm/dd/yyyy)")
+    parser.add_argument('-d', '--date', required=True, type=str, help="Date of the observation (mm/dd/yyyy)")
+    parser.add_argument('-p', '--projection', required=False, type=str, help="Projection onto polar", choices=plot_utils.projections, default='linear')
     args = parser.parse_args()
 
     month, day, year = args.date.split("/")
@@ -154,7 +156,7 @@ def main():
     n = 5000
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
 
-    plot_object(args.name, date, midnight_deltaT, location)
+    plot_object(args.name, date, midnight_deltaT, location, args.projection)
 
 if __name__ == "__main__":
     main()

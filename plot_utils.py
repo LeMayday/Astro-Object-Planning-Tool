@@ -1,7 +1,7 @@
 # taken from: https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
 import warnings
 
-from typing import Tuple
+from typing import Tuple, Literal, get_args
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.projections.polar import PolarAxes
@@ -129,3 +129,15 @@ def polar_subplots(**fig_kw) -> Tuple[Figure, PolarAxes]:
 def make_proxy(zvalue, scalar_mappable, **kwargs):
     color = scalar_mappable.cmap(scalar_mappable.norm(zvalue))
     return Line2D([0, 1], [0, 1], color=color, **kwargs)
+
+# https://stackoverflow.com/questions/9522877/pythonic-way-to-have-a-choice-of-2-3-options-as-an-argument-to-a-function
+__projection_types = Literal['linear', 'cosine']
+projections = list(get_args(__projection_types))
+def project_onto_polar(input_vec: np.ndarray, projection: __projection_types = 'cosine') -> np.ndarray:
+    options = get_args(__projection_types)
+    assert projection in options, f"'{projection}' is not in {options}"
+    if projection == 'linear':
+        output_vec = -(input_vec / (np.pi/2) - 1)
+    elif projection == 'cosine':
+        output_vec = np.cos(input_vec)
+    return output_vec
