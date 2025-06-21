@@ -98,7 +98,7 @@ def main():
     fig, ax = plot_object(args.name, night_hrs_vec, location, args.projection)
     ax.set_title(args.name + " on the night of " + month + "/" + day + "/" + year + " at " + str(args.latitude) + " Lat")
     fig.tight_layout()
-    fig.savefig(args.name.replace(" ", "_") + "_altitude_" + month + "-" + day + "-" + year, dpi=300)
+    fig.savefig(args.name.replace(" ", "-") + "_altaz_" + month + "-" + day + "-" + year, dpi=300)
 
 if __name__ == "__main__":
     main()
