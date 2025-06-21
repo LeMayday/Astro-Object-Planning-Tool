@@ -38,7 +38,9 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
     ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
     ax.set_theta_zero_location('N')
 
-    text_str = f"Time Visible (Dark): {Observing_Metrics.time_visible:.2f} hrs\nTime Above 15 deg (Dark): {Observing_Metrics.time_optimal:.2f} hrs\nTime to Astro Dark: {Observing_Metrics.time_to_astro_dark:.2f} hrs"
+    text_str = f"""Time Visible (Dark): {Observing_Metrics.time_visible:.1f} hrs
+                Time Above 15 deg (Dark): {Observing_Metrics.time_optimal:.1f} hrs
+                Time from Sunset to Astro Dark: {Observing_Metrics.time_to_astro_dark:.1f} hrs"""
     ax.text(np.radians(180), 1.1, text_str, multialignment='right', horizontalalignment='center', verticalalignment='top')
     
     handles, labels = ax.get_legend_handles_labels()
