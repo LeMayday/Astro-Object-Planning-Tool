@@ -77,22 +77,13 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
         object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
     return object_alt_az
 
-def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, location: EarthLocation, projection: str):
+def plot_object(object_name: str, night_hrs_vec: np.ndarray, date: Time, location: EarthLocation, projection: str):
 
-    local_midnight = get_local_midnight(date)
-
-    night_hrs_vec = local_midnight + midnight_deltaT * u.hour
     object_alt_az = get_object_alt_az(object_name, night_hrs_vec, location)
-    metrics = Observing_Metrics(object_alt_az, local_midnight, location)
     # determine Moon position
     moon_alt_az = get_object_alt_az('moon', night_hrs_vec, location)
     sun_alt_az = get_object_alt_az('sun', night_hrs_vec, location)
-    
-    year = str(date.ymdhms[0])
-    month = str(date.ymdhms[1])
-    day = str(date.ymdhms[2])
 
-    astro_dark_deltaT = midnight_deltaT[sun_alt_az.alt.degree <= -18]
     fig, ax = plot_utils.polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
 
     color = sun_alt_az.alt.degree
@@ -110,15 +101,16 @@ def plot_object(object_name: str, date: Time, midnight_deltaT: np.ndarray, locat
     ax.set_rticks(plot_utils.project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
     ax.set_theta_zero_location('N')
     
-    ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
-
     handles, labels = ax.get_legend_handles_labels()
     proxy = plot_utils.make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
-
     ax.legend(handles=handles, labels=labels, loc="upper left")
 
+    year = str(date.ymdhms[0])
+    month = str(date.ymdhms[1])
+    day = str(date.ymdhms[2])
+    ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
     fig.tight_layout()
     fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year, dpi=300)
 
@@ -155,8 +147,9 @@ def main():
 
     n = 5000
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
-
-    plot_object(args.name, date, midnight_deltaT, location, args.projection)
+    local_midnight = get_local_midnight(date)
+    night_hrs_vec = local_midnight + midnight_deltaT * u.hour
+    plot_object(args.name, date, night_hrs_vec, location, args.projection)
 
 if __name__ == "__main__":
     main()
