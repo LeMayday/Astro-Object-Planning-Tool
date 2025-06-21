@@ -43,13 +43,13 @@ class Observing_Metrics:
     def __time_above_horizon_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
         above_horizon = object_alt_az.alt.degree >= 0
         during_astro_dark = sun_alt_az.alt.degree <= -18
-        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, above_horizon and during_astro_dark)
+        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, np.logical_and(above_horizon, during_astro_dark))
     
     @classmethod
     def __time_above_15deg_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
         above_15deg = object_alt_az.alt.degree >= 15
         during_astro_dark = sun_alt_az.alt.degree <= -18
-        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, above_15deg and during_astro_dark)
+        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, np.logical_and(above_15deg, during_astro_dark))
 
     @classmethod
     def compute_metrics(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord):
