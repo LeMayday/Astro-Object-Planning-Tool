@@ -45,7 +45,7 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
     proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
-    ax.legend(handles=handles, labels=labels, loc="upper left")
+    ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left")
 
     year = str(date.ymdhms[0])
     month = str(date.ymdhms[1])
