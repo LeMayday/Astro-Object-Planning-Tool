@@ -42,7 +42,8 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
                 linewidth=3, color='k', label='Moon', alpha=0.8)
     ax.set_rlim([0, 1])
     # draws lines of constant altitude
-    ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
+    ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), 
+                  labels=['', r'15$^\degree$', r'30$^\degree$', r'45$^\degree$', r'60$^\degree$', r'75$^\degree$', ''])
     ax.set_theta_zero_location('N')
     # report observing metrics
     text_str = f"""Time Visible (during Astro Dark): {Observing_Metrics.time_visible:.1f} hrs
