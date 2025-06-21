@@ -54,7 +54,7 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left")
 
     # capture date info for figure title and file name
-    date = night_hrs_vec[0].isot
+    date = Time(night_hrs_vec[0], format='iso', scale='utc')
     year = str(date.ymdhms[0])
     month = str(date.ymdhms[1])
     day = str(date.ymdhms[2])
