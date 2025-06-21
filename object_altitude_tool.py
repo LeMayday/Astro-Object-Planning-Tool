@@ -55,7 +55,8 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
-    ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left")
+    ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left", edgecolor='None', facecolor='#e6e6e6')
+    fig.set_facecolor('#e6e6e6')
     return fig, ax
 
 def main():
