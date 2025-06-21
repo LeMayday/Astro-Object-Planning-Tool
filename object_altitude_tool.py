@@ -14,27 +14,30 @@ from plot_utils import colored_line_between_pts, polar_subplots, make_proxy, pro
 from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az
 
 def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: EarthLocation, projection: str):
-
+    '''
+    Plot object and Moon during given night hours
+    '''
     object_alt_az = get_object_alt_az(object_name, night_hrs_vec, location)
-    # determine Moon position
     moon_alt_az = get_object_alt_az('moon', night_hrs_vec, location)
     sun_alt_az = get_object_alt_az('sun', night_hrs_vec, location)
     Observing_Metrics.compute_metrics(object_alt_az, sun_alt_az)
 
     fig, ax = polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
-
+    # maps colors based on sun altitude (lighest when sun is above horizon, darkest during astro dark)
     color = sun_alt_az.alt.degree
     color[sun_alt_az.alt.degree > 0] = 0
     color[sun_alt_az.alt.degree < -18] = -18
-
+    # define boolean arrays to make indexing more intuitive
     obj_above_horizon = object_alt_az.alt.radian >= 0
     moon_above_horizon = moon_alt_az.alt.radian >= 0
-
+    # plots object alt vs az with sun alt used for color
     lines = colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], project_onto_polar(object_alt_az.alt.radian[obj_above_horizon], projection),
                                      color[obj_above_horizon][:-1], ax, linewidth=5, cmap="cividis")
-    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], project_onto_polar(moon_alt_az.alt.radian[moon_above_horizon], projection), 
+    # plots moon alt vs az
+    ax.plot(moon_alt_az.az.radian[moon_above_horizon], project_onto_polar(moon_alt_az.alt.radian[moon_above_horizon], projection), 
                 linewidth=3, color='k', label='Moon', alpha=0.8)
     ax.set_rlim([0, 1])
+    # draws lines of constant altitude
     ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
     ax.set_theta_zero_location('N')
 
@@ -43,6 +46,7 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
                 Time from Sunset to Astro Dark: {Observing_Metrics.time_to_astro_dark:.1f} hrs"""
     ax.text(np.radians(180), 1.1, text_str, multialignment='right', horizontalalignment='center', verticalalignment='top')
     
+    # configure legend
     handles, labels = ax.get_legend_handles_labels()
     proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
@@ -74,22 +78,22 @@ def main():
     n_search = 1000
     range_to_search = np.linspace(-12.5, 12.5, n_search)
     sun_alt_az = get_object_alt_az('sun', local_midnight + range_to_search * u.hour, location)
-
+    # time range when sun is below horizon in hrs after local midnight
     midnight_deltaT = range_to_search[sun_alt_az.alt.degree <= 0]
-
+    # exit if the sun never sets
     if (midnight_deltaT.size == 0):
         print("Sun does not set.")
         exit()
-
+    # exit if the sun never goes below 18 degrees
+    # this isn't really a deal breaker, but it probably won't be dark enough to get good images
     astro_dark_deltaT = range_to_search[sun_alt_az.alt.degree <= 18]
-
     if (astro_dark_deltaT.size == 0):
         print("No astronomical dark.")
         exit()
 
+    # redefine midnight_deltaT to have more granularity
     n = 5000
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
-    local_midnight = get_local_midnight(date)
     night_hrs_vec = local_midnight + midnight_deltaT * u.hour
     Observing_Metrics(midnight_deltaT)
     plot_object(args.name, night_hrs_vec, date, location, args.projection)

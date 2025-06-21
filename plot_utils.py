@@ -123,11 +123,16 @@ def colored_line_between_pts(x, y, c, ax, **lc_kwargs):
     return ax.add_collection(lc)
 
 def polar_subplots(**fig_kw) -> Tuple[Figure, PolarAxes]:
+    '''
+    Helper function that specifies return types for a polar plot to help during coding
+    '''
     fig, ax = plt.subplots(**fig_kw)
     return fig, ax
 
-# https://stackoverflow.com/questions/19877666/add-legends-to-linecollection-plot
 def make_proxy(zvalue, scalar_mappable, **kwargs):
+    '''
+    Returns a proxy artist to use as a handle for plot legend. See https://stackoverflow.com/questions/19877666/add-legends-to-linecollection-plot
+    '''
     color = scalar_mappable.cmap(scalar_mappable.norm(zvalue))
     return Line2D([0, 1], [0, 1], color=color, **kwargs)
 
@@ -135,10 +140,16 @@ def make_proxy(zvalue, scalar_mappable, **kwargs):
 # unfortunately, python doesn't enforce const types, and the method declaration will not allow __projection_types to be defined at runtime
 __projection_types = Literal['linear', 'cosine']
 PROJECTIONS = list(get_args(__projection_types))
+
 def project_onto_polar(input_vec: np.ndarray, projection: __projection_types = 'cosine') -> np.ndarray:
+    '''
+    Returns projection of input_vec representing altitudes onto polar plot. 
+    '''
+    # checks that projection is one of the allowed types
     options = get_args(__projection_types)
     assert projection in options, f"'{projection}' is not in {options}"
     if projection == 'linear':
+        # normalize by pi/2 and flip (so 90 maps to 0 and 0 maps to 1)
         output_vec = -(input_vec / (np.pi/2) - 1)
     elif projection == 'cosine':
         output_vec = np.cos(input_vec)
