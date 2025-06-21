@@ -8,6 +8,7 @@ import argparse
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 16})
 import numpy as np
+from numpy.typing import NDArray
 import astropy.units as u
 from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
 from astropy.time import Time
@@ -21,41 +22,41 @@ class Observing_Metrics:
     time_astro_dark (also above horizon)
     time_optimal (time above 15 deg and during astro dark)
     '''
-    def __init__(self, object_alt_az: SkyCoord, local_midnight: Time, location: EarthLocation):
-        # # num data points
-        # n = np.size(object_alt_az)
-        # # fraction of altitudes that match criterion * length of night in hours
-        # self.time_above_horizon = np.count_nonzero(object_alt_az.alt.degree > 0) / n * night_half_length * 2
-        # self.time_above_15_deg = np.count_nonzero(object_alt_az.alt.degree > 15) / n * night_half_length * 2
-        # # fraction of night before astro dark * n to get start index
-        # idx1 = np.floor((night_half_length - astro_dark_half_length) / (night_half_length * 2) * n).astype(int)
-        # # fraction of night until end of astro dark * n to get end index
-        # idx2 = np.ceil((night_half_length + astro_dark_half_length) / (night_half_length * 2) * n).astype(int)
-        # co_alt_az_astro_dark = object_alt_az.alt.degree[idx1 : idx2]
-        # self.time_astro_dark = np.count_nonzero(co_alt_az_astro_dark > 0) / n * night_half_length * 2
-        # # TODO: add time_optimal
-        pass
+    @staticmethod
+    def __compute_deltaT_subject_to(deltaT: np.ndarray, condition: NDArray[np.bool_]):
+        deltaT = deltaT[condition]
+        if deltaT.size == 0:
+            return 0
+        return deltaT[-1] - deltaT[0]
 
-def get_night_start_end(local_midnight: Time, location: EarthLocation) -> Tuple[float, float]:
-    '''
-    Determines time from sunset to local midnight and astronomical dark to local midnight
-    Inputs: Time object with JD format, EarthLocation based on lat, long
-    Outputs: time from sunset to midnight and time from astro dark to midnight in hours
-    '''
-    # number of points used to estimate sunset
-    n = 1000
-    # given midnight, we know sunset will occur sometime within the 12 hours prior
-    # for simplicity, sunset to midnight and midnight to sunrise is assumed to be the same
-    range_to_search = local_midnight + np.linspace(-12, 12, n) * u.hour
-    sun_alt_az = get_object_alt_az('sun', range_to_search, location)
-    night = np.nonzero(sun_alt_az.alt.degree <= 0)
-    night_start = night[0] / n * 24 - 12
-    night_end = night[-1] / n * 24 - 12
-    # astronomical dark occurs when the sun is 18 degrees below the horizon
-    astro_dark = np.nonzero(sun_alt_az.alt.degree <= -18)
-    astro_dark_start = astro_dark[0] / n * 24 - 12
-    astro_dark_end = astro_dark[-1] / n * 24 - 12
-    return Tuple(night_start, night_end), Tuple(astro_dark_start, astro_dark_end)
+    @classmethod
+    def __init__(self, midnight_deltaT: np.ndarray):
+        self.__midnight_deltaT = midnight_deltaT
+
+    @classmethod
+    def __time_to_astro_dark(self, sun_alt_az: SkyCoord) -> float:
+        during_astro_dark = sun_alt_az.alt.degree <= -18
+        astro_dark_deltaT = self.__midnight_deltaT[during_astro_dark]
+        return astro_dark_deltaT[0] - self.__midnight_deltaT[0]
+
+    @classmethod
+    def __time_above_horizon_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
+        above_horizon = object_alt_az.alt.degree >= 0
+        during_astro_dark = sun_alt_az.alt.degree <= -18
+        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, above_horizon and during_astro_dark)
+    
+    @classmethod
+    def __time_above_15deg_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
+        above_15deg = object_alt_az.alt.degree >= 15
+        during_astro_dark = sun_alt_az.alt.degree <= -18
+        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, above_15deg and during_astro_dark)
+
+    @classmethod
+    def compute_metrics(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord):
+        self.time_to_astro_dark = self.__time_to_astro_dark(sun_alt_az)
+        self.time_visible = self.__time_above_horizon_and_astro_dark(object_alt_az, sun_alt_az)
+        self.time_optimal = self.__time_above_15deg_and_astro_dark(object_alt_az, sun_alt_az)
+
 
 def get_local_midnight(date: Time, long: u.quantity.Quantity = 0*u.deg) -> Time:
     # +1 for night of date, - long / 360 to convert to local midnight
@@ -149,6 +150,7 @@ def main():
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
     local_midnight = get_local_midnight(date)
     night_hrs_vec = local_midnight + midnight_deltaT * u.hour
+    Observing_Metrics(midnight_deltaT)
     plot_object(args.name, date, night_hrs_vec, location, args.projection)
 
 if __name__ == "__main__":
