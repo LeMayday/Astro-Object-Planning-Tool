@@ -78,7 +78,7 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
         object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
     return object_alt_az
 
-def plot_object(object_name: str, night_hrs_vec: np.ndarray, date: Time, location: EarthLocation, projection: str):
+def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: EarthLocation, projection: str):
 
     object_alt_az = get_object_alt_az(object_name, night_hrs_vec, location)
     # determine Moon position
@@ -151,7 +151,7 @@ def main():
     local_midnight = get_local_midnight(date)
     night_hrs_vec = local_midnight + midnight_deltaT * u.hour
     Observing_Metrics(midnight_deltaT)
-    plot_object(args.name, date, night_hrs_vec, location, args.projection)
+    plot_object(args.name, night_hrs_vec, date, location, args.projection)
 
 if __name__ == "__main__":
     main()
