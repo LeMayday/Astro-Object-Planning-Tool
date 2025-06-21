@@ -11,3 +11,5 @@ The tool is run from the command line, likely by running
 py ./object_altitude_tool -n <object name> -l <observer latitude> -d <observation date MM/DD/YYYY>
 ```
 You can optionally specify how the object's altitude will be projected onto a polar grid, but it will default to linear, which I think looks the best.
+
+The code requires an internet connection to run to get object coordinates from a database.
