@@ -60,7 +60,7 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     day = str(date.ymdhms[2])
     ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
     fig.tight_layout()
-    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "_" + day + "_" + year, dpi=300)
+    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "-" + day + "-" + year, dpi=300)
 
 def main():
     parser = argparse.ArgumentParser()
