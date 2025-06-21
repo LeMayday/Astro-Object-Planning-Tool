@@ -4,8 +4,11 @@
 # requires matplotlib, numpy, astropy, and jplephem modules
 
 import argparse
+from typing import Tuple
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 16})
+from matplotlib.figure import Figure
+from matplotlib.projections.polar import PolarAxes
 import numpy as np
 import astropy.units as u
 from astropy.coordinates import EarthLocation
@@ -13,7 +16,8 @@ from astropy.time import Time
 from plot_utils import colored_line_between_pts, polar_subplots, make_proxy, project_onto_polar, PROJECTIONS
 from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az
 
-def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, projection: str):
+
+def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, projection: str) -> Tuple[Figure, PolarAxes]:
     '''
     Plot object and Moon during given night hours
     '''
@@ -45,22 +49,14 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
                 Time Above 15 deg (Dark): {Observing_Metrics.time_optimal:.1f} hrs
                 Time from Sunset to Astro Dark: {Observing_Metrics.time_to_astro_dark:.1f} hrs"""
     ax.text(np.radians(180), 1.1, text_str, multialignment='right', horizontalalignment='center', verticalalignment='top')
-    
     # configure legend
     handles, labels = ax.get_legend_handles_labels()
+    # LineCollection cannot be added to the legend except through proxy artist
     proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
     ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left")
-
-    # capture date info for figure title and file name
-    date = Time(night_hrs_vec[0], format='iso', scale='utc')
-    year = str(date.ymdhms[0])
-    month = str(date.ymdhms[1])
-    day = str(date.ymdhms[2])
-    ax.set_title(object_name + " on the night of " + month + "/" + day + "/" + year + " at " + str(location.lat.value) + " Lat")
-    fig.tight_layout()
-    fig.savefig(object_name.replace(" ", "_") + "_altitude_" + month + "-" + day + "-" + year, dpi=300)
+    return fig, ax
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,7 +66,7 @@ def main():
     parser.add_argument('-d', '--date', required=True, type=str, help="Date of the observation (mm/dd/yyyy)")
     parser.add_argument('-p', '--projection', required=False, type=str, help="Projection onto polar", choices=PROJECTIONS, default='linear')
     args = parser.parse_args()
-
+    # define info about the observing session from arguments
     month, day, year = args.date.split("/")
     date = Time(year + "-" + month + "-" + day, format='iso', scale='utc')
     location = get_viewer_location(args.latitude * u.deg)
@@ -98,7 +94,11 @@ def main():
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
     night_hrs_vec = local_midnight + midnight_deltaT * u.hour
     Observing_Metrics(midnight_deltaT)
-    plot_object(args.name, night_hrs_vec, location, args.projection)
+    # plot object, set title, and save file
+    fig, ax = plot_object(args.name, night_hrs_vec, location, args.projection)
+    ax.set_title(args.name + " on the night of " + month + "/" + day + "/" + year + " at " + str(args.latitude) + " Lat")
+    fig.tight_layout()
+    fig.savefig(args.name.replace(" ", "_") + "_altitude_" + month + "-" + day + "-" + year, dpi=300)
 
 if __name__ == "__main__":
     main()
