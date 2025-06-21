@@ -156,3 +156,4 @@ cython_debug/
 
 # Output images
 *.png
+!EXAMPLE*.png
