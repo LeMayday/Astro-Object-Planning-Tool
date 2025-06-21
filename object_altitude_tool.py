@@ -14,7 +14,7 @@ import astropy.units as u
 from astropy.coordinates import EarthLocation
 from astropy.time import Time
 from plot_utils import colored_line_between_pts, polar_subplots, make_proxy, project_onto_polar, PROJECTIONS
-from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az
+from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az, moon_rising
 
 
 def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, projection: str) -> Tuple[Figure, PolarAxes]:
@@ -56,7 +56,9 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
-    ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left", edgecolor='None', facecolor='#e6e6e6')
+    # changes legend location depending on whether the Moon is primarily rising or setting
+    legend_loc = "upper left" if moon_rising(moon_alt_az) else "upper right"
+    ax.legend(handles=handles[1:], labels=labels[1:], loc=legend_loc, edgecolor='None', facecolor='#e6e6e6')
     fig.set_facecolor('#e6e6e6')
     return fig, ax
 

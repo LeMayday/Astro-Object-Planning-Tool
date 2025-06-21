@@ -96,3 +96,12 @@ def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthL
         # uses Simbad to resolve object names and retrieve coordinates
         object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
     return object_alt_az
+
+def moon_rising(moon_alt_az: SkyCoord) -> bool:
+    '''
+    Determines whether the Moon is primarily rising or setting given the alt_az coordinates on the night of observation
+    '''
+    moon_above_horizon = moon_alt_az.alt.radian >= 0
+    moon_az_above_horizon = moon_alt_az.az.degree[moon_above_horizon]
+    avg_moon_az = (moon_az_above_horizon[-1] + moon_az_above_horizon[0])/2
+    return avg_moon_az <= 180
