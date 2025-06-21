@@ -13,7 +13,7 @@ from astropy.time import Time
 from plot_utils import colored_line_between_pts, polar_subplots, make_proxy, project_onto_polar, PROJECTIONS
 from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az
 
-def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: EarthLocation, projection: str):
+def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, projection: str):
     '''
     Plot object and Moon during given night hours
     '''
@@ -53,6 +53,8 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
     labels.insert(0, object_name)
     ax.legend(handles=handles[1:], labels=labels[1:], loc="upper left")
 
+    # capture date info for figure title and file name
+    date = night_hrs_vec[0].isot
     year = str(date.ymdhms[0])
     month = str(date.ymdhms[1])
     day = str(date.ymdhms[2])
@@ -96,7 +98,7 @@ def main():
     midnight_deltaT = np.linspace(midnight_deltaT[0], midnight_deltaT[-1], n)
     night_hrs_vec = local_midnight + midnight_deltaT * u.hour
     Observing_Metrics(midnight_deltaT)
-    plot_object(args.name, night_hrs_vec, date, location, args.projection)
+    plot_object(args.name, night_hrs_vec, location, args.projection)
 
 if __name__ == "__main__":
     main()
