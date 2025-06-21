@@ -1,82 +1,17 @@
-# Author: Mayday
 # Date: 6/29/2024
+# Edited: 6/20/2025
 # inspired by https://docs.astropy.org/en/stable/generated/examples/coordinates/plot_obs-planning.html
 # requires matplotlib, numpy, astropy, and jplephem modules
 
-from typing import Tuple
 import argparse
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 16})
 import numpy as np
-from numpy.typing import NDArray
 import astropy.units as u
-from astropy.coordinates import AltAz, EarthLocation, SkyCoord, get_body
+from astropy.coordinates import EarthLocation
 from astropy.time import Time
-import plot_utils
-
-class Observing_Metrics:
-    '''
-    Class object that calculates and stores observing metrics for the night
-    time_above_horizon
-    time_above_15_deg
-    time_astro_dark (also above horizon)
-    time_optimal (time above 15 deg and during astro dark)
-    '''
-    @staticmethod
-    def __compute_deltaT_subject_to(deltaT: np.ndarray, condition: NDArray[np.bool_]):
-        deltaT = deltaT[condition]
-        if deltaT.size == 0:
-            return 0
-        return deltaT[-1] - deltaT[0]
-
-    @classmethod
-    def __init__(self, midnight_deltaT: np.ndarray):
-        self.__midnight_deltaT = midnight_deltaT
-
-    @classmethod
-    def __time_to_astro_dark(self, sun_alt_az: SkyCoord) -> float:
-        during_astro_dark = sun_alt_az.alt.degree <= -18
-        astro_dark_deltaT = self.__midnight_deltaT[during_astro_dark]
-        return astro_dark_deltaT[0] - self.__midnight_deltaT[0]
-
-    @classmethod
-    def __time_above_horizon_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
-        above_horizon = object_alt_az.alt.degree >= 0
-        during_astro_dark = sun_alt_az.alt.degree <= -18
-        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, np.logical_and(above_horizon, during_astro_dark))
-    
-    @classmethod
-    def __time_above_15deg_and_astro_dark(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord) -> float:
-        above_15deg = object_alt_az.alt.degree >= 15
-        during_astro_dark = sun_alt_az.alt.degree <= -18
-        return self.__compute_deltaT_subject_to(self.__midnight_deltaT, np.logical_and(above_15deg, during_astro_dark))
-
-    @classmethod
-    def compute_metrics(self, object_alt_az: SkyCoord, sun_alt_az: SkyCoord):
-        self.time_to_astro_dark = self.__time_to_astro_dark(sun_alt_az)
-        self.time_visible = self.__time_above_horizon_and_astro_dark(object_alt_az, sun_alt_az)
-        self.time_optimal = self.__time_above_15deg_and_astro_dark(object_alt_az, sun_alt_az)
-
-
-def get_local_midnight(date: Time, long: u.quantity.Quantity = 0*u.deg) -> Time:
-    # +1 for night of date, - long / 360 to convert to local midnight
-    local_midnight = Time(date.to_value('jd', 'float') + 1 - long.value / 360, format='jd')
-    return local_midnight
-
-def get_viewer_location(lat: u.quantity.Quantity, long: u.quantity.Quantity = 0*u.deg) -> EarthLocation:
-    location = EarthLocation(lat=lat, lon=long, height = 0 * u.m)
-    return location
-
-def get_object_alt_az(object_name: str, time_range: np.ndarray, location: EarthLocation) -> SkyCoord:
-    # local frame so coords can be converted to alt, az
-    local_frame = AltAz(obstime=time_range, location=location)
-    if object_name == 'sun' or object_name == 'moon':
-        # uses jpl ephemerides 
-        object_alt_az = get_body(object_name, time_range).transform_to(local_frame)
-    else:
-        # uses Simbad to resolve object names and retrieve coordinates
-        object_alt_az = SkyCoord.from_name(name=object_name, frame=local_frame)
-    return object_alt_az
+from plot_utils import colored_line_between_pts, polar_subplots, make_proxy, project_onto_polar, PROJECTIONS
+from observing_utils import Observing_Metrics, get_local_midnight, get_viewer_location, get_object_alt_az
 
 def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: EarthLocation, projection: str):
 
@@ -86,7 +21,7 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
     sun_alt_az = get_object_alt_az('sun', night_hrs_vec, location)
     Observing_Metrics.compute_metrics(object_alt_az, sun_alt_az)
 
-    fig, ax = plot_utils.polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
+    fig, ax = polar_subplots(figsize = (10, 10), subplot_kw={'projection': 'polar'})
 
     color = sun_alt_az.alt.degree
     color[sun_alt_az.alt.degree > 0] = 0
@@ -95,19 +30,19 @@ def plot_object(object_name: str, night_hrs_vec: Time, date: Time, location: Ear
     obj_above_horizon = object_alt_az.alt.radian >= 0
     moon_above_horizon = moon_alt_az.alt.radian >= 0
 
-    lines = plot_utils.colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], plot_utils.project_onto_polar(object_alt_az.alt.radian[obj_above_horizon], projection),
-                                                color[obj_above_horizon], ax, linewidth=5, cmap="cividis")
-    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], plot_utils.project_onto_polar(moon_alt_az.alt.radian[moon_above_horizon], projection), 
+    lines = colored_line_between_pts(object_alt_az.az.radian[obj_above_horizon], project_onto_polar(object_alt_az.alt.radian[obj_above_horizon], projection),
+                                     color[obj_above_horizon][:-1], ax, linewidth=5, cmap="cividis")
+    p = ax.plot(moon_alt_az.az.radian[moon_above_horizon], project_onto_polar(moon_alt_az.alt.radian[moon_above_horizon], projection), 
                 linewidth=3, color='k', label='Moon', alpha=0.8)
     ax.set_rlim([0, 1])
-    ax.set_rticks(plot_utils.project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
+    ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), labels=['', '15', '30', '45', '60', '75', ''])
     ax.set_theta_zero_location('N')
 
     text_str = f"Time Visible (Dark): {Observing_Metrics.time_visible:.2f} hrs\nTime Above 15 deg (Dark): {Observing_Metrics.time_optimal:.2f} hrs\nTime to Astro Dark: {Observing_Metrics.time_to_astro_dark:.2f} hrs"
     ax.text(np.radians(180), 1.1, text_str, multialignment='right', horizontalalignment='center', verticalalignment='top')
     
     handles, labels = ax.get_legend_handles_labels()
-    proxy = plot_utils.make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
+    proxy = make_proxy(np.mean(color[obj_above_horizon]), lines, linewidth=5)
     handles.insert(0, proxy)
     labels.insert(0, object_name)
     ax.legend(handles=handles, labels=labels, loc="upper left")
@@ -125,7 +60,7 @@ def main():
     parser.add_argument('-l', '--latitude', required=True, type=float, help="Latitude as decimal degrees")
     # parser.add_argument('-m', '--meridian', required=True, type=float, help="Longitude (meridian) as decimal degrees")
     parser.add_argument('-d', '--date', required=True, type=str, help="Date of the observation (mm/dd/yyyy)")
-    parser.add_argument('-p', '--projection', required=False, type=str, help="Projection onto polar", choices=plot_utils.projections, default='linear')
+    parser.add_argument('-p', '--projection', required=False, type=str, help="Projection onto polar", choices=PROJECTIONS, default='linear')
     args = parser.parse_args()
 
     month, day, year = args.date.split("/")

@@ -1,3 +1,5 @@
+# Date: 6/17/2025
+# Edited: 6/20/2025
 # taken from: https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html
 import warnings
 
@@ -7,7 +9,6 @@ from matplotlib.figure import Figure
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.lines import Line2D
 import numpy as np
-
 from matplotlib.collections import LineCollection
 
 
@@ -131,8 +132,9 @@ def make_proxy(zvalue, scalar_mappable, **kwargs):
     return Line2D([0, 1], [0, 1], color=color, **kwargs)
 
 # https://stackoverflow.com/questions/9522877/pythonic-way-to-have-a-choice-of-2-3-options-as-an-argument-to-a-function
+# unfortunately, python doesn't enforce const types, and the method declaration will not allow __projection_types to be defined at runtime
 __projection_types = Literal['linear', 'cosine']
-projections = list(get_args(__projection_types))
+PROJECTIONS = list(get_args(__projection_types))
 def project_onto_polar(input_vec: np.ndarray, projection: __projection_types = 'cosine') -> np.ndarray:
     options = get_args(__projection_types)
     assert projection in options, f"'{projection}' is not in {options}"
