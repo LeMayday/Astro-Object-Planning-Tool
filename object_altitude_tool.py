@@ -45,6 +45,20 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     ax.set_rticks(project_onto_polar(np.radians([0, 15, 30, 45, 60, 75, 90]), projection), 
                   labels=['', r'15$^\degree$', r'30$^\degree$', r'45$^\degree$', r'60$^\degree$', r'75$^\degree$', ''])
     ax.set_theta_zero_location('N')
+    
+    # adds ticks showing time since sunset to axis
+    for i in range(1, int((night_hrs_vec[-1] - night_hrs_vec[0]).value * 24) + 1):
+        tick_time = night_hrs_vec[0] + i * u.hour
+        tick_ojb_alt_az = get_object_alt_az(object_name, tick_time, location)
+        if tick_ojb_alt_az.alt.radian >= 0:
+            ax.text(tick_ojb_alt_az.az.radian, project_onto_polar(tick_ojb_alt_az.alt.radian, projection), f"+{i}", 
+                    horizontalalignment='left', verticalalignment='bottom')
+        tick_moon_alt_az = get_object_alt_az('moon', tick_time, location)
+        if tick_moon_alt_az.alt.radian >= 0:
+            ax.text(tick_moon_alt_az.az.radian, project_onto_polar(tick_moon_alt_az.alt.radian, projection), f"+{i}", 
+                    horizontalalignment='left', verticalalignment='bottom')
+    ax.text(np.radians(180), 1.1, "**Note: Ticks along object paths show hours after sunset.", multialignment='right', horizontalalignment='center', verticalalignment='top')
+
     # report observing metrics
     text_str = f"""Time Visible (during Astro Dark): {Observing_Metrics.time_visible:.1f} hrs
                 Time Above 15 deg (during Astro Dark): {Observing_Metrics.time_optimal:.1f} hrs
