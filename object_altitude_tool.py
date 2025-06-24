@@ -60,10 +60,16 @@ def plot_object(object_name: str, night_hrs_vec: Time, location: EarthLocation, 
     ax.text(np.radians(180), 1.1, "**Note: Ticks along object paths show hours after sunset.", multialignment='right', horizontalalignment='center', verticalalignment='top')
 
     # report observing metrics
-    text_str = f"""Time Visible (during Astro Dark): {Observing_Metrics.time_visible:.1f} hrs
-                Time Above 15 deg (during Astro Dark): {Observing_Metrics.time_optimal:.1f} hrs
-                Time from Sunset to Astro Dark: {Observing_Metrics.time_to_astro_dark:.1f} hrs"""
-    ax.text(np.radians(180), 1.1, text_str, multialignment='right', horizontalalignment='center', verticalalignment='top')
+    text_str = ("Time Visible (during Astro Dark):\n"
+                "Time Above 15 deg (during Astro Dark):\n"
+                "Time from Sunset to Astro Dark:")
+    num_str = (f"{Observing_Metrics.time_visible:.1f} hrs\n"
+                f"{Observing_Metrics.time_optimal:.1f} hrs\n"
+                f"{Observing_Metrics.time_to_astro_dark:.1f} hrs")
+    r_width = 0.8
+    r_height = 0.15
+    ax.text(0.5 - r_width/2, -0.15 - r_height/2, text_str, multialignment='left', horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes)
+    ax.text(0.5 + r_width/2, -0.15 - r_height/2, num_str, multialignment='right', horizontalalignment='right', verticalalignment='bottom', transform=ax.transAxes)
     # configure legend
     handles, labels = ax.get_legend_handles_labels()
     # LineCollection cannot be added to the legend except through proxy artist
